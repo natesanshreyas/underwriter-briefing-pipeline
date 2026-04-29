@@ -1,0 +1,28 @@
+kind: AdaptiveDialog
+$schema: https://schemas.microsoft.com/adaptive-dialog/1.0/schema
+id: GetUnderwriterBriefing
+definition:
+  $kind: Microsoft.AdaptiveDialog
+  recognizer:
+    $kind: Microsoft.RegexRecognizer
+    intents:
+      - intent: GetBriefing
+        pattern: (?i)briefing
+  triggers:
+    - $kind: Microsoft.OnIntent
+      intent: GetBriefing
+      actions:
+        - $kind: Microsoft.TextInput
+          id: ask
+          prompt: Email?
+          property: conversation.email
+
+        - $kind: Microsoft.HttpRequest
+          id: api
+          url: =concat('https://underwriter-briefing-api.azurewebsites.net/api/GetBriefingsByEmail?email=', encodeURIComponent(conversation.email))
+          method: GET
+          resultProperty: conversation.response
+
+        - $kind: Microsoft.SendActivity
+          id: show
+          activity: =conversation.response

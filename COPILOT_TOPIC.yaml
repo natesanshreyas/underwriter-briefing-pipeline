@@ -1,0 +1,57 @@
+# Copilot Studio Topic: Get Underwriter Briefing
+# This topic retrieves a briefing from Cosmos DB via the Azure Function API
+# 
+# IMPORTANT: This YAML is for reference. Import/paste this into Copilot Studio.
+# The actual topic must be created in the UI at: Copilot Studio > Agent > Topics > Create
+
+kind: AdaptiveDialog
+beginDialog:
+  - kind: OnRecognizedIntent
+    id: demoTrigger
+    intent:
+      triggerQueries:
+        - get briefing
+        - show briefing
+        - retrieve briefing
+        - underwriter briefing
+        - briefing for email
+        - get underwriter briefing
+    actions:
+      - kind: Question
+        id: askForEmail
+        prompt: "What broker email would you like the briefing for?"
+        property: Topic.email
+        alwaysVisible: false
+        promptSettings:
+          groups: []
+          correctTagsColor: 0
+          maxLength: -1
+        inputType: Text
+        recognizer:
+          kind: TextInput
+
+      - kind: HttpRequestAction
+        id: callGetBriefingAPI
+        url: =Concatenate("https://underwriter-briefing-api.azurewebsites.net/api/GetBriefingsByEmail?email=", Topic.email)
+        method: Get
+        headers:
+          Content-Type: "application/json"
+        response: Topic.apiResponse
+
+      - kind: Question
+        id: checkIfSuccess
+        condition: =Topic.apiResponse.statusCode = 200
+        prompt: =Concatenate("Here is the briefing for ", Topic.email, ":\n\n", Topic.apiResponse.body)
+        alwaysVisible: true
+        
+      - kind: Question
+        id: showError
+        condition: =Topic.apiResponse.statusCode <> 200
+        prompt: =Concatenate("Error retrieving briefing: ", Topic.apiResponse.body)
+        alwaysVisible: true
+
+  - kind: OnUnknownIntent
+    id: unknown
+    actions:
+      - kind: SendActivity
+        activity: "I can help you retrieve underwriter briefings. Try saying 'get briefing' or 'show briefing for [email]'."

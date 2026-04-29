@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  namespace: mail-ingestion
+  annotations:
+    # Azure-managed public IP with static allocation
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: "RESOURCE_GROUP"
+spec:
+  type: LoadBalancer
+  selector:
+    app: webhook-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP

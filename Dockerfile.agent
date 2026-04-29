@@ -1,0 +1,36 @@
+# Dockerfile for Underwriter Briefing Agent UI (FastAPI + Static Frontend)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements_agent.txt .
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements_agent.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy agent backend
+COPY ai_agent_backend.py .
+COPY ai_agent_config.json .
+COPY underwriter_briefing.py .
+COPY cosmos_storage.py .
+
+# Copy static frontend
+COPY frontend/ /app/frontend/
+
+# Expose port (matches localhost:8080 development)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Run FastAPI with Uvicorn
+CMD ["uvicorn", "ai_agent_backend:app", "--host", "0.0.0.0", "--port", "8080"]

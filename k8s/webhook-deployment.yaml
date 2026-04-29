@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-service
+  namespace: mail-ingestion
+  labels:
+    app: webhook-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: webhook-service
+  template:
+    metadata:
+      labels:
+        app: webhook-service
+    spec:
+      containers:
+        - name: webhook-service
+          image: ACR_NAME.azurecr.io/webhook-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: mail-ingestion-config
+          env:
+            - name: EVENT_GRID_TOPIC_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: mail-ingestion-secrets
+                  key: EVENT_GRID_TOPIC_ENDPOINT
+            - name: EVENT_GRID_TOPIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mail-ingestion-secrets
+                  key: EVENT_GRID_TOPIC_KEY
+            - name: GRAPH_CLIENT_STATE
+              valueFrom:
+                configMapKeyRef:
+                  name: mail-ingestion-config
+                  key: GRAPH_CLIENT_STATE
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

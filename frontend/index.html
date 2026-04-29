@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Underwriter Briefing Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 800px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.assistant .message-content h1,
+        .message.assistant .message-content h2,
+        .message.assistant .message-content h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .message.assistant .message-content h1 {
+            font-size: 22px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .message.assistant .message-content h2 {
+            font-size: 18px;
+        }
+
+        .message.assistant .message-content h3 {
+            font-size: 16px;
+        }
+
+        .message.assistant .message-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .message.assistant .message-content th,
+        .message.assistant .message-content td {
+            border: 1px solid #ddd;
+            padding: 12px 8px;
+            text-align: left;
+        }
+
+        .message.assistant .message-content th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .message.assistant .message-content tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .message.assistant .message-content ul,
+        .message.assistant .message-content ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+
+        .message.assistant .message-content li {
+            margin: 5px 0;
+        }
+
+        .message.assistant .message-content hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 15px 0;
+        }
+
+        .message.assistant .message-content strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .message.assistant .message-content code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .message.system .message-content {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            max-width: 100%;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .input-container {
+            padding: 20px 30px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+        }
+
+        #sendBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #sendBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.4;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-action-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .function-call-indicator {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Underwriter Briefing Assistant</h1>
+            <p>AI-powered briefing retrieval and analysis</p>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message system">
+                <div class="message-content">
+                    👋 Welcome! I can help you retrieve underwriter briefings. Try asking:
+                    <br>"Show me briefings for broker@company.com" or "Get briefing ID xyz for Acme Corp"
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="quick-actions">
+                <button class="quick-action-btn" onclick="quickQuery('Show me recent briefings for shreyas@acme.com')">
+                    📧 Recent briefings
+                </button>
+                <button class="quick-action-btn" onclick="quickQuery('What are the urgent items in my briefings?')">
+                    ⚡ Urgent items
+                </button>
+                <button class="quick-action-btn" onclick="quickQuery('Summarize sentiment across all briefings')">
+                    📊 Sentiment analysis
+                </button>
+            </div>
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Ask about briefings..." 
+                    onkeypress="handleKeyPress(event)"
+                />
+                <button id="sendBtn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';  // Update for production
+        let conversationHistory = [];
+
+        function addMessage(role, content, functionCalls = null) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            let contentHTML;
+            
+            // Render markdown for assistant messages
+            if (role === 'assistant') {
+                // Configure marked options
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true
+                });
+                contentHTML = marked.parse(content);
+            } else {
+                contentHTML = content.replace(/\n/g, '<br>');
+            }
+            
+            let functionCallHTML = '';
+            if (functionCalls && functionCalls.length > 0) {
+                functionCallHTML = '<div class="function-call-indicator">🔧 Called: ' + 
+                    functionCalls.map(fc => fc.name).join(', ') + '</div>';
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${contentHTML}
+                    ${functionCallHTML}
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const userMessage = input.value.trim();
+            
+            if (!userMessage) return;
+            
+            // Add user message to UI
+            addMessage('user', userMessage);
+            conversationHistory.push({ role: 'user', content: userMessage });
+            
+            // Clear input and disable
+            input.value = '';
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="loading"></span> Thinking...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: conversationHistory,
+                        stream: false
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Add assistant response
+                addMessage('assistant', data.message.content, data.function_calls);
+                conversationHistory.push({ 
+                    role: 'assistant', 
+                    content: data.message.content 
+                });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('system', `❌ Error: ${error.message}. Make sure the backend is running at ${API_BASE_URL}`);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+                input.focus();
+            }
+        }
+
+        function quickQuery(query) {
+            document.getElementById('userInput').value = query;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Focus input on load
+        window.onload = () => {
+            document.getElementById('userInput').focus();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Exposes the worker's /eventgrid/events endpoint so Event Grid can push to it.
+# Requires the nginx ingress controller (installed by deploy_aks.sh).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: worker-ingress
+  namespace: mail-ingestion
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # TLS is required by Event Grid for push subscriptions
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: WORKER_HOSTNAME
+      http:
+        paths:
+          - path: /eventgrid/events
+            pathType: Prefix
+            backend:
+              service:
+                name: email-ingestion-worker
+                port:
+                  number: 8081

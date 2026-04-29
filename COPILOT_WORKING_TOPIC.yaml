@@ -1,0 +1,51 @@
+# ============================================================================
+# WORKING COPILOT STUDIO TOPIC FOR UNDERWRITER BRIEFING
+# ============================================================================
+# 
+# HOW TO USE:
+# 1. Open Copilot Studio (https://copilotstudio.microsoft.com)
+# 2. Select your agent (Agent 5)
+# 3. Click Topics tab
+# 4. Click Create > Topic from Blank
+# 5. Copy EVERYTHING BELOW and paste into the YAML editor
+# 6. Name the topic "Get Underwriter Briefing"
+# 7. Save and Publish
+#
+# ============================================================================
+
+kind: AdaptiveDialog
+beginDialog:
+  - kind: OnRecognizedIntent
+    id: unw_main_trigger
+    intent:
+      triggerQueries:
+        - get briefing
+        - show briefing
+        - retrieve briefing
+        - briefing
+        - underwriter briefing
+        - get underwriter briefing
+        - show me briefing
+        - briefing report
+    actions:
+      - kind: Question
+        id: unw_ask_email
+        prompt: "What is the broker's email address?"
+        property: Topic.email
+        inputType: Text
+
+      - kind: HttpRequestAction
+        id: unw_call_api
+        url: =Concatenate("https://underwriter-briefing-api.azurewebsites.net/api/GetBriefingsByEmail?email=", UrlEncode(Topic.email))
+        method: Get
+        response: Topic.apiResult
+
+      - kind: Question
+        id: unw_show_result
+        condition: =Topic.apiResult.statusCode = 200
+        activity: =Concatenate("**Briefing for ", Topic.email, ":**\n\n", JSONStringify(Topic.apiResult.body))
+
+      - kind: Question
+        id: unw_error_result
+        condition: =Topic.apiResult.statusCode <> 200
+        activity: =Concatenate("❌ Error: Unable to retrieve briefing. Status: ", Topic.apiResult.statusCode)

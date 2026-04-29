@@ -1,0 +1,23 @@
+# Dockerfile for Batch Data Pipeline (Email Processing Job)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy core modules
+COPY underwriter_briefing.py .
+COPY cosmos_storage.py .
+COPY examples_outlook.py .
+
+# Run the batch job
+CMD ["python", "underwriter_briefing.py"]

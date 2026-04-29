@@ -1,0 +1,46 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Azure Functions
+local.settings.json
+.python_packages/
+
+# Testing
+.pytest_cache/
+tests/
+
+# Documentation
+*.md
+examples_*.py
+FILE_GUIDE.txt
+HYBRID_ARCHITECTURE.md
+COSMOS_COPILOT_SETUP.md
+IMPLEMENTATION_SUMMARY.md
+EXAMPLE_HYBRID_IMPLEMENTATION.py
+quickstart_hybrid.py
+WHATS_NEW_HYBRID.md
+README_HYBRID_BRIEFING.md
+AZURE_OPENAI_CONFIG.md
+
+# Secrets
+secrets.json
